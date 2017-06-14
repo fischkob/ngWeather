@@ -1,0 +1,246 @@
+<!--
+    AngularJS application that displays weather information
+    based on user input, from an external JSON source (i.e. OPenWeatherMap API)
+ -->
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <meta charset="utf-8"/>
+    <style>
+        /* Fancy button for fancy people */
+        .button {
+            background-color: white;
+            color: black;
+            border: 2px solid #7dcdbc;
+        }
+        
+        .button:hover {
+            background-color: #7dcdbc;
+            color: white;
+        }
+        
+        :disabled {
+            cursor: not-allowed;
+        }
+        
+        /* Fix alignment for flavor text */
+        img {
+            vertical-align: middle;
+        }
+        
+        span {
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Setting up the Angular-App and defining the controller -->
+    <div ng-app="weatherApp" ng-controller="wCtrl">
+
+        <form name="inputForm" novalidate>
+            <center>
+                <input type="text" size="35" placeholder="PLZ oder Stadt eingeben" name="wInput" ng-model="wInput" required>
+                <button class="button" ng-click="getWeather()" ng-disabled="inputForm.wInput.$invalid">Wetter abfragen</button>
+            </center>
+        </form>
+        <br>
+        <!-- Block for current weather information -->
+        <div ng-show="showCurrent">
+            <div style="float: left; width: 200px; padding: 5px;">Aktuelles Wetter:</div>
+            <div style="float: left; border:1px solid #000; width: 300px; padding: 5px;">
+                {{currentWeather.temp}}<br>
+                {{currentWeather.wind}}<br>
+                {{currentWeather.press}}
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+        <br>
+        <!-- Block for forecast -->
+        <div ng-show="showForecast">
+            <div style="float: left; width: 200px; padding: 5px;">Morgen:</div>
+            <div style="float: left; border:1px solid #000; width: 300px; padding: 5px;">
+                <p>
+                {{forecast.tomorrow.temp}}<br>
+                {{forecast.tomorrow.wind}}<br>
+                {{forecast.tomorrow.press}}<br>
+                {{forecast.tomorrow.outlook}}
+            </div>
+            <div style="clear: both;"></div>
+            <!-- Placeholder so everything aligns properly -->
+            <div style="float: left; width: 200px; padding: 5px;"></div>
+            <div style="float: left; width: 300px; padding: 5px;">
+            <img ng-src="http://openweathermap.org/img/w/{{forecast.tomorrow.icon}}.png"/>
+            <span ng-bind="forecast.tomorrow.flavor"></span> 
+            </div>
+            <div style="clear: both;"></div>
+            <br>
+            <div style="float: left; width: 200px; padding: 5px;">Übermorgen:</div>
+            <div style="float: left; border:1px solid #000; width: 300px; padding: 5px;">
+                {{forecast.dayAfter.temp}}<br>
+                {{forecast.dayAfter.wind}}<br>
+                {{forecast.dayAfter.press}}<br>
+                {{forecast.dayAfter.outlook}}
+            </div>
+            <div style="clear: both;"></div>
+            <!-- Placeholder so everything aligns properly -->
+            <div style="float: left; width: 200px; padding: 5px;"></div>
+            <div style="float: left; width: 300px; padding: 5px;">
+            <img ng-src="http://openweathermap.org/img/w/{{forecast.dayAfter.icon}}.png"/>
+            <span ng-bind="forecast.dayAfter.flavor"></span> 
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+<script>
+    var app = angular.module('weatherApp', []);
+
+    app.service('wApi', [ '$http', function($http) {
+        var token = 'entertokenhere';
+        
+        function getForecast(input) {
+            // Define API request for 3 day forecast. Limited to german cities
+            if(isNaN(Number(input))) {
+            // Check if input is not a number else use the zip code request
+                var request = {
+                    method: 'GET',
+                    url: 'http://api.openweathermap.org/data/2.5/forecast/daily',
+                    params: {
+                        q: input+',de',                                 // Defines type of API request (cityname)
+                        mode: 'json',                                   // Encoding mode
+                        units: 'metric',                                // For degree celcius. Imperial for fahrenheit
+                        cnt: '3',                                       // How many days
+                        appid: token                                    // API key
+                    }
+                }
+            } else {
+                // Needs zip code validation. Something like /[0-9]{5}/.test()            
+                var request = {
+                    method: 'GET',
+                    url: 'http://api.openweathermap.org/data/2.5/forecast/daily',
+                    params: {
+                        zip: input+',de',
+                        mode: 'json',
+                        units: 'metric',
+                        cnt: '3',
+                        appid: token
+                    }
+                }                
+            }
+            return doRequest(request);
+        }
+        
+        function getCurrentWeather(input) {
+            // Define API request for the current weather. Limited to german cities 
+            if(isNaN(Number(input))) {
+                var request = {
+                    method: 'GET',
+                    url: 'http://api.openweathermap.org/data/2.5/weather',
+                    params: {
+                        q: input+',de',
+                        mode: 'json',
+                        units: 'metric',
+                        appid: token
+                    }
+                }
+            } else {
+                var request = {
+                    method: 'GET',
+                    url: 'http://api.openweathermap.org/data/2.5/weather',
+                    params: {
+                        zip: input+',de',
+                        mode: 'json',
+                        units: 'metric',
+                        appid: token
+                    }
+                }
+            }
+            return doRequest(request);  
+        }
+        // Send the above generated request and return the response
+        function doRequest(request) {
+            return $http(request)
+                .then(function(response) {
+                    return response.data;
+                })
+                .catch(function(response) {
+                    return response.data;
+                })
+        }
+        // Make objects accessible
+        return {
+            getForecast: getForecast,
+            getCurrentWeather: getCurrentWeather 
+        };
+   
+    }]);
+
+    app.controller('wCtrl', function($scope, wApi) {
+        // Setting up vars
+        $scope.showCurrent = false;
+        $scope.showForecast = false;
+        $scope.currentWeather = {};
+        $scope.forecast = {};
+        $scope.forecast.tomorrow = {};
+        $scope.forecast.dayAfter = {};
+        // Function executed by button
+        $scope.getWeather = function() {
+            // Call weather service for the current weather
+            wApi.getCurrentWeather($scope.wInput).then(function(response){
+                $scope.showCurrent = true;
+                $scope.currentWeather.temp  = "Temperatur: "+response.main.temp+" °C";
+                $scope.currentWeather.wind  = "Wind: "+response.wind.speed+" km/h";
+                $scope.currentWeather.press = "Luftdruck: "+response.main.pressure+" hPa";
+            });
+            // Call weather service for the 3 day forecast
+            wApi.getForecast($scope.wInput).then(function(response){
+                $scope.showForecast = true;
+                // Setting ouput for tomorrows forecast
+                $scope.forecast.tomorrow.temp  = "Temperatur: "+response.list[1].temp.day+" °C";
+                $scope.forecast.tomorrow.wind  = "Wind: "+response.list[1].speed+" km/h";
+                $scope.forecast.tomorrow.press = "Luftdruck: "+response.list[1].pressure+" hPa";
+                $scope.forecast.tomorrow.id    = response.list[1].weather[0].id;
+                $scope.forecast.tomorrow.icon    = response.list[1].weather[0].icon;
+                
+                // Setting outlook and flavor text for tomorrow based on
+                // https://openweathermap.org/weather-conditions
+                if($scope.forecast.tomorrow.id > 200 && $scope.forecast.tomorrow.id < 700) {
+                    $scope.forecast.tomorrow.outlook = "Einstufung: Regen";
+                    $scope.forecast.tomorrow.flavor = "Nimm lieber einen Regenschirm mit!";
+                } else if ($scope.forecast.tomorrow.id > 800 && $scope.forecast.tomorrow.ide < 900) {
+                    $scope.forecast.tomorrow.outlook = "Einstufung: Bewölkt";
+                    $scope.forecast.tomorrow.flavor = "Nur graue Grütze am Himmel.";
+                } else {
+                    $scope.forecast.tomorrow.outlook = "Einstufung: Sonnig";
+                    $scope.forecast.tomorrow.flavor = "Pack deine Sonnenbrille ein!";
+                }
+                
+                // Setting ouput for day after tomorrows forecast
+                $scope.forecast.dayAfter.temp  = "Temperatur: "+response.list[2].temp.day+" °C";
+                $scope.forecast.dayAfter.wind  = "Wind: "+response.list[2].speed+" km/h";
+                $scope.forecast.dayAfter.press = "Luftdruck: "+response.list[2].pressure+" hPa";
+                $scope.forecast.dayAfter.id    = response.list[2].weather[0].id;
+                $scope.forecast.dayAfter.icon    = response.list[2].weather[0].icon;
+                
+                // Setting outlook and flavor text for day after tomorrow                
+                if($scope.forecast.dayAfter.id > 200 && $scope.forecast.dayAfter.id < 700) {
+                    $scope.forecast.dayAfter.outlook = "Einstufung: Regen";
+                    $scope.forecast.dayAfter.flavor = "Nimm lieber einen Regenschirm mit!";
+                } else if ($scope.forecast.dayAfter.id > 800 && $scope.forecast.dayAfter.id < 900) {
+                    $scope.forecast.dayAfter.outlook = "Einstufung: Bewölkt";
+                    $scope.forecast.dayAfter.flavor = "Nur graue Grütze am Himmel.";
+                } else {
+                    $scope.forecast.dayAfter.outlook = "Einstufung: Sonnig";
+                    $scope.forecast.dayAfter.flavor = "Pack deine Sonnenbrille ein!";
+                }
+            });
+
+        }
+    });
+</script>
+
+</body>
+</html>
