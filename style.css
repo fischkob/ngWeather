@@ -1,0 +1,71 @@
+body {
+            font-family: Verdana, Geneva, sans-serif;
+            padding: 10px;
+        }
+    
+        input[type=text] {
+            width: 30%;
+            padding: 12px 12px;
+            box-sizing: border-box;
+            border: 2px solid #7dcdbc;
+            border-radius: 20px;
+        }
+    
+        /* Fancy button for fancy people */
+        .button {
+            background-color: white;
+            color: black;
+            padding: 12px 12px;            
+            border: 2px solid #7dcdbc;
+            border-radius: 20px;
+        }
+        
+        .button:hover {
+            background-color: #7dcdbc;
+            color: white;
+        }
+        
+        :disabled {
+            cursor: not-allowed;
+        }
+        
+        /* Fix alignment for flavor text */
+        img {
+            vertical-align: middle;
+        }
+        
+        span {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        div.ng-scope {
+            padding: 10px;
+            border-radius: 10px
+        }
+        
+        div.wDisplay {
+            width: 50%;
+            background-color: #ffffff;
+            opacity: 0.6;
+            filter: alpha(opacity=60); /* For IE8 and earlier */
+            border-radius: 10px;
+            padding: 5px;
+        }
+        
+        div.wDay {
+            float: left;
+            width: 200px;
+            padding: 5px;
+        }
+        
+        div.wData { 
+            border: 1px solid #7dcdbc;
+            border-radius: 10px;
+            width: 40%; 
+            padding: 5px;
+        }
+        div.wOutlook {
+            width: 40%; 
+            padding: 5px;
+        }
